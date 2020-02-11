@@ -76,6 +76,18 @@
       }
     }
 
+    const test = () => {
+      const { width, height } = canvas;
+      console.log(width * 0.2)
+      console.log(height * 0.8)
+      console.log(width * 0.6)
+      console.log(height * 0.1)
+    }
+
+    test()
+
+    
+
     function renderScreen() {
       const { players } = state;
       const { width, height } = canvas;
