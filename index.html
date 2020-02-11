@@ -3,8 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <title>Jogo</title>
+  <style>
+    #screen {
+      background: #ddd;
+    }
+  </style>
 </head>
 <body>
-  
+  <canvas id="screen" width="1200" height="700"></canvas>
+
+  <script>
+    const canvas = document.querySelector('#screen');
+    const context = canvas.getContext('2d');
+
+    const state = {
+      players: {
+        '1': {
+          x: 300,
+          y: 300,
+          vx: 0,
+          vy: 0,
+          w: 40,
+          h: 40
+        },
+        '2': {
+          x: 200,
+          y: 100,
+          vx: 0,
+          vy: 0,
+          w: 40,
+          h: 40
+        }
+      },
+      itens: {
+        
+      }
+    }
+
+    document.addEventListener('keydown', event => { movePlayer(event.key) });
+    // document.addEventListener('keyup', event => { state.players['1'].vx = 0 });
+
+    function movePlayer(key) {
+      const player = state.players['1'];
+
+      const acceptsMoves = {
+        'ArrowLeft': () => {
+          player.vx = -2;
+        },
+        'ArrowUp': () => {
+          player.vy = -5;
+        },
+        'ArrowRight': () => {
+          player.vx = 2;
+        }
+      };
+
+      const moveFunction = acceptsMoves[key];
+
+      if(moveFunction) {
+        moveFunction();
+      }
+    }
+
+    function update() {
+      const { players } = state;
+
+      for(playerId in players) {
+        const player = players[playerId];
+        player.x += player.vx;
+        player.y += player.vy;
+        player.vy += 0.3;
+      }
+    }
+
+    function renderScreen() {
+      const { players } = state;
+      const { width, height } = canvas;
+      context.clearRect(0, 0, width, height);
+      context.fillRect(width * 0.2, height * 0.8, width * 0.6, height * 0.1);
+      for(const playerId in players) {
+        const { x, y, w, h } = players[playerId];
+        context.fillRect(x, y, w, h);
+      }
+      update();
+      requestAnimationFrame(renderScreen);
+    }
+
+    renderScreen();
+  </script>
 </body>
 </html>
