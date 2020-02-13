@@ -10,51 +10,76 @@
   </style>
 </head>
 <body>
-  <canvas id="screen" width="1200" height="700"></canvas>
+  <canvas id="screen" width="1200" height="675"></canvas>
 
-  <script>
+  <script type="module">
     const canvas = document.querySelector('#screen');
     const context = canvas.getContext('2d');
 
     const state = {
       players: {
-        '1': {
+        'Player1': {
           x: 300,
           y: 300,
-          vx: 0,
-          vy: 0,
           w: 40,
-          h: 40
+          h: 40,
+          vx: 0,
+          vy: 0
         },
         '2': {
-          x: 200,
-          y: 100,
-          vx: 0,
-          vy: 0,
+          x: 400,
+          y: 300,
           w: 40,
-          h: 40
+          h: 40,
+          vx: 0,
+          vy: 0
         }
       },
       itens: {
         
+      },
+      floor: {
+        x: 240,
+        y: 540,
+        w: 720,
+        h: 67
       }
     }
 
-    document.addEventListener('keydown', event => { movePlayer(event.key) });
-    // document.addEventListener('keyup', event => { state.players['1'].vx = 0 });
+    const currentPlayer = 'Player1';
+
+
+
+
+    document.addEventListener('keydown', event => { movePlayer(event.key) }, false);
+   
+    document.addEventListener('keyup', event => { 
+      const { key } = event;
+      const player = state.players[currentPlayer];
+
+      if (key === 'ArrowLeft') {
+        player.vx += 3;
+      }
+
+      if (key === 'ArrowRight') {
+        player.vx -= 3;
+      }
+      
+    }, false);
+
 
     function movePlayer(key) {
-      const player = state.players['1'];
+      const player = state.players[currentPlayer];
 
       const acceptsMoves = {
         'ArrowLeft': () => {
-          player.vx = -2;
+          player.vx = -3;
         },
         'ArrowUp': () => {
           player.vy = -5;
         },
         'ArrowRight': () => {
-          player.vx = 2;
+          player.vx = 3;
         }
       };
 
@@ -64,44 +89,111 @@
         moveFunction();
       }
     }
-
+  
     function update() {
       const { players } = state;
 
-      for(playerId in players) {
+      for(const playerId in players) {
         const player = players[playerId];
         player.x += player.vx;
         player.y += player.vy;
-        player.vy += 0.3;
+        player.vy += 0.3; // Gravity
+      }
+
+      checkColisionOnFloor();
+    }
+
+    function checkColisionBetweenTwoRects({
+        x: x1, y: y1,
+        w: w1, h: h1
+      },{
+        x: x2, y: y2,
+        w: w2, h: h2
+      },{
+        colisionOnLeft, colisionOnTop,
+        colisionOnRight, colisionOnBottom
+      }) {
+      const catX = (x1 + (w1 / 2)) - (x2 + (w2 / 2));
+      const catY = (y1 + (h1 / 2)) - (y2 + (h2 / 2));
+
+      const sumHalfWidth = (w1 / 2) + (w2 / 2);
+      const sumHalfHeight = (h1 / 2) + (h2 / 2);
+      
+      if(Math.abs(catX) < sumHalfWidth && Math.abs(catY) < sumHalfHeight) {
+        
+        const overLapX = sumHalfWidth - Math.abs(catX);
+        const overLapY = sumHalfHeight - Math.abs(catY);
+
+        if(overLapX >= overLapY) {
+          if(catY > 0) {
+            // colision on top
+            
+            colisionOnTop(overLapY);
+          } else {
+            // colision on bottom
+
+            colisionOnBottom(overLapY);
+          }
+        } else { 
+          if(catX > 0) {
+            // colision on left
+
+            colisionOnLeft(overLapX);
+          } else {
+            // colision on right
+
+            colisionOnRight(overLapX);
+          }
+        }
       }
     }
 
-    const test = () => {
-      const { width, height } = canvas;
-      console.log(width * 0.2)
-      console.log(height * 0.8)
-      console.log(width * 0.6)
-      console.log(height * 0.1)
+
+    function checkColisionOnFloor() {
+      const { players, floor } = state;
+
+      for(const playerId in players) {
+        const player = players[playerId];
+
+        checkColisionBetweenTwoRects(player, floor, {
+          colisionOnLeft: overLap => {
+            player.x += overLap;
+          },
+          colisionOnTop: overLap => {
+            player.vy = 0;
+            player.y += overLap;
+          },
+          colisionOnRight: overLap => {
+            player.x -= overLap;
+          },
+          colisionOnBottom: overLap => {
+            player.vy = 0;
+            player.y -= overLap;
+          }
+        })
+      }
     }
 
-    test()
-
-    
-
-    function renderScreen() {
-      const { players } = state;
+    function render() {
+      const { players, floor } = state;
       const { width, height } = canvas;
       context.clearRect(0, 0, width, height);
-      context.fillRect(width * 0.2, height * 0.8, width * 0.6, height * 0.1);
+      context.fillStyle = '#000';
+      context.fillRect(floor.x, floor.y, floor.w, floor.h);
+      context.fillStyle = 'green';
       for(const playerId in players) {
         const { x, y, w, h } = players[playerId];
         context.fillRect(x, y, w, h);
       }
-      update();
-      requestAnimationFrame(renderScreen);
     }
 
-    renderScreen();
+    function loop() {
+      render();
+      update();
+      requestAnimationFrame(loop, canvas);
+    }
+
+    loop();
   </script>
 </body>
 </html>
